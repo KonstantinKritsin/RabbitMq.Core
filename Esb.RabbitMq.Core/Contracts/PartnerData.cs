@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ConsumerNet35.Contracts
+namespace Esb.RabbitMq.Core.Contracts
 {
 	public class PartnerData
 	{

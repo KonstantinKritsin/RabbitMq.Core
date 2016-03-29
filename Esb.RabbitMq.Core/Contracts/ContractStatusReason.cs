@@ -1,4 +1,4 @@
-namespace ConsumerNet35.Contracts
+namespace Esb.RabbitMq.Core.Contracts
 {
 	public enum ContractStatusReason
 	{
