@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Esb.RabbitMq.Core;
 using Esb.RabbitMq.Core.Contracts;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
@@ -48,8 +49,16 @@ namespace SubscriberNet35
             var props = factory._channel.CreateBasicProperties();
             props.CorrelationId = corrId;
             props.ReplyTo = queueConsumer.ReplyQueueName;
+
+            // todo: для межсервисного взаимодействия нет нужды сохранять сообщения, а, например, для отправки почты возможно пригодиться
+            //props.SetPersistent(true);
 #warning set expiration
-            var json = JsonConvert.SerializeObject(request);
+            var msg = new RequestMessage
+            {
+                V = 0,
+                P = new Dictionary<string, string> { {"", JsonConvert.SerializeObject(request) } }
+            };
+            var json = JsonConvert.SerializeObject(msg);
             factory._channel.BasicPublish(nameof(ICMSService), rout, props, Encoding.UTF8.GetBytes(json));
 
             while (true)
@@ -57,9 +66,9 @@ namespace SubscriberNet35
                 var ea = queueConsumer.Consumer.Queue.Dequeue();
                 if (ea.BasicProperties.CorrelationId == corrId)
                 {
-                    var msg = Encoding.UTF8.GetString(ea.Body);
-                    var obj = JsonConvert.DeserializeObject<TResult>(msg);
-                    return obj;
+                    var body = Encoding.UTF8.GetString(ea.Body);
+                    var obj = JsonConvert.DeserializeObject<ResponseMessage<TResult>>(body);
+                    return obj.R;
                 }
             }
         }
